@@ -1,0 +1,8 @@
+@InProceedings{Tse_2026_CVPR,
+    author    = {Tse, Tze Ho Elden and Peng, Jizong and Yao, Angela},
+    title     = {Learning Scene Coordinate Reconstruction from Unposed Images via Pose Graph Optimization},
+    booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+    month     = {June},
+    year      = {2026},
+    pages     = {21816-21825}
+}

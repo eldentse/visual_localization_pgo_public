@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Learning Scene Coordinate Reconstruction from Unposed Images via Pose Graph Optimization</title>
+	<meta name="description" content="CVPR 2026 (Highlight). A hybrid framework that integrates pose graph optimization into ACE-Zero, with uncertainty-aware edges from epipolar and optical flow consistency.">
+	<meta property="og:image" content="https://eldentse.github.io/visual_localization_pgo_public/resources/teaser.png"/> <!-- Facebook automatically scrapes this. Go to https://developers.facebook.com/tools/debug/ if you update and want to force Facebook to rescrape. -->
+	<meta property="og:title" content="Learning Scene Coordinate Reconstruction from Unposed Images via Pose Graph Optimization" />
+	<meta property="og:description" content="CVPR 2026 (Highlight). Pose graph optimization inside ACE-Zero, with uncertainty-aware edges from epipolar and optical flow consistency." />
+	<meta name="twitter:card" content="summary_large_image">
+
+	<style type="text/css">
+		body {
+			font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+			font-weight:300;
+			font-size:18px;
+			line-height:1.5;
+			color:#222;
+			background:#fff;
+			margin-left: auto;
+			margin-right: auto;
+			max-width: 1100px;
+			padding: 0 16px;
+		}
+
+		h1 {
+			font-size:32px;
+			font-weight:300;
+			text-align:center;
+		}
+
+		b {
+			font-weight:600;
+		}
+
+		h2 {
+			font-size:24px;
+			font-weight:300;
+			margin-top:32px;
+		}
+
+		a:link,a:visited
+		{
+			color: #1367a7;
+			text-decoration: none;
+		}
+		a:hover {
+			color: #208799;
+		}
+
+		img {
+			max-width: 100%;
+			height: auto;
+		}
+
+		.section {
+			max-width: 850px;
+			margin-left: auto;
+			margin-right: auto;
+		}
+
+		.section.wide {
+			max-width: 1000px;
+		}
+
+		.title {
+			font-size:36px;
+			line-height:1.25;
+			text-align:center;
+			margin-top:32px;
+		}
+
+		.authors {
+			font-size:24px;
+			text-align:center;
+			margin-top:16px;
+		}
+
+		.authors span {
+			margin: 0 14px;
+			white-space: nowrap;
+		}
+
+		.affiliations {
+			font-size:18px;
+			text-align:center;
+		}
+
+		.affiliations span {
+			margin: 0 10px;
+			white-space: nowrap;
+		}
+
+		.venue {
+			font-size:22px;
+			text-align:center;
+			margin-top:8px;
+		}
+
+		.links {
+			font-size:24px;
+			text-align:center;
+			margin-top:12px;
+		}
+
+		.links a {
+			margin: 0 10px;
+			white-space: nowrap;
+		}
+
+		figure {
+			margin: 24px 0;
+			text-align: center;
+		}
+
+		figcaption {
+			font-size:16px;
+			text-align:left;
+			color:#444;
+			margin-top:8px;
+		}
+
+		.fig-row {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 24px;
+			align-items: flex-start;
+			justify-content: center;
+		}
+
+		.fig-row figure {
+			flex: 1 1 360px;
+			margin: 0;
+		}
+
+		.disclaimerbox {
+			background-color: #eee;
+			border: 1px solid #eeeeee;
+			border-radius: 10px ;
+			-moz-border-radius: 10px ;
+			-webkit-border-radius: 10px ;
+			padding: 20px;
+		}
+
+		img.rounded {
+			border: 1px solid #eeeeee;
+			border-radius: 10px ;
+			-moz-border-radius: 10px ;
+			-webkit-border-radius: 10px ;
+		}
+
+		.table-scroll {
+			overflow-x: auto;
+		}
+
+		table.results {
+			border-collapse: collapse;
+			margin: 16px auto;
+			font-size:17px;
+		}
+
+		table.results th, table.results td {
+			padding: 6px 14px;
+			text-align: center;
+		}
+
+		table.results th:first-child, table.results td:first-child {
+			text-align: left;
+		}
+
+		table.results thead th {
+			font-weight: 400;
+			border-bottom: 1px solid #999;
+		}
+
+		table.results tr.group td {
+			padding-top: 12px;
+			font-weight: 400;
+		}
+
+		table.results td.indent {
+			padding-left: 30px;
+		}
+
+		table.results td.best {
+			font-weight: 600;
+		}
+
+		table.results tbody {
+			border-bottom: 1px solid #999;
+		}
+
+		.note {
+			font-size:15px;
+			color:#555;
+		}
+
+		ol.steps li {
+			margin-bottom: 10px;
+		}
+
+		.paper-row {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 40px;
+			align-items: center;
+			justify-content: center;
+		}
+
+		.layered-paper-big { /* modified from: http://css-tricks.com/snippets/css/layered-paper/ */
+			box-shadow:
+			0px 0px 1px 1px rgba(0,0,0,0.35), /* The top layer shadow */
+			5px 5px 0 0px #fff, /* The second layer */
+			5px 5px 1px 1px rgba(0,0,0,0.35), /* The second layer shadow */
+			10px 10px 0 0px #fff, /* The third layer */
+			10px 10px 1px 1px rgba(0,0,0,0.35), /* The third layer shadow */
+			15px 15px 0 0px #fff, /* The fourth layer */
+			15px 15px 1px 1px rgba(0,0,0,0.35), /* The fourth layer shadow */
+			20px 20px 0 0px #fff, /* The fifth layer */
+			20px 20px 1px 1px rgba(0,0,0,0.35), /* The fifth layer shadow */
+			25px 25px 0 0px #fff, /* The fifth layer */
+			25px 25px 1px 1px rgba(0,0,0,0.35); /* The fifth layer shadow */
+			margin-left: 10px;
+			margin-right: 45px;
+		}
+
+		pre.bibtex {
+			font-size:14px;
+			background-color: #f6f6f6;
+			border-radius: 10px;
+			padding: 16px;
+			overflow-x: auto;
+			text-align: left;
+		}
+
+		hr
+		{
+			border: 0;
+			height: 1px;
+			margin: 32px 0;
+			background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0));
+		}
+
+		@media (max-width: 600px) {
+			.title { font-size:28px; }
+			.authors, .links { font-size:20px; }
+			h1 { font-size:28px; }
+		}
+	</style>
+</head>
+
+<body>
+	<div class="title">Learning Scene Coordinate Reconstruction<br>from Unposed Images via Pose Graph Optimization</div>
+
+	<div class="authors">
+		<span><a href="https://eldentse.github.io/">Tze Ho Elden Tse</a><sup>1,2</sup></span>
+		<span>Jizong Peng<sup>1</sup></span>
+		<span><a href="https://www.comp.nus.edu.sg/~ayao/">Angela Yao</a><sup>2</sup></span>
+	</div>
+	<div class="affiliations">
+		<span><sup>1</sup>dConstruct Robotics</span>
+		<span><sup>2</sup>National University of Singapore</span>
+	</div>
+	<div class="venue"><b>CVPR 2026 (Highlight)</b></div>
+
+	<div class="links">
+		<a href="https://openaccess.thecvf.com/content/CVPR2026/papers/Tse_Learning_Scene_Coordinate_Reconstruction_from_Unposed_Images_via_Pose_Graph_CVPR_2026_paper.pdf">[Paper]</a>
+		<a href="https://openaccess.thecvf.com/content/CVPR2026/supplemental/Tse_Learning_Scene_Coordinate_CVPR_2026_supplemental.pdf">[Supplementary]</a>
+		<a href="https://github.com/eldentse/visual_localization_pgo_public">[Code]</a>
+		<a href="#bibtex">[BibTeX]</a>
+	</div>
+
+	<div class="section">
+		<figure>
+			<img src="./resources/teaser.png" alt="Camera trajectories on the office loop sequence: COLMAP (PSNR 28.1), ACE-Zero with a drifting, misaligned loop (PSNR 19.1), and ours with a consistent loop (PSNR 25.6).">
+			<figcaption>
+				Even when initialized from (a) COLMAP camera poses, the local refinements of (b) ACE-Zero introduce global inconsistencies.
+				(c) Our hybrid framework integrates pose graph optimization into ACE-Zero, enforcing multi-view consistency and suppressing incorrect refinements.
+				PSNR measures novel view synthesis quality.
+			</figcaption>
+		</figure>
+	</div>
+
+	<hr>
+
+	<div class="section">
+		<h1>Abstract</h1>
+		<p>
+			Learning-based structure-from-motion methods such as ACE-Zero have demonstrated strong performance in estimating camera poses and scene coordinates from unordered image collections without requiring ground truth supervision.
+			However, the lack of global and multi-view consistency constraints in ACE-Zero can lead to pose drift and misalignment, particularly in complex or ambiguous scenes.
+			In this work, we propose a hybrid framework that integrates pose graph optimization (PGO) into ACE-Zero to refine camera poses and suppress incorrect refinements.
+			We construct pose graphs directly from ACE-Zero outputs by extracting relative pose constraints from predicted scene coordinates.
+			Furthermore, we introduce an uncertainty-aware optimization strategy by estimating confidence scores using geometric priors, including epipolar and optical flow consistencies across views.
+			Our approach improves the robustness and accuracy of pose estimation, demonstrating that global geometric reasoning can effectively complement learning-based inference in structure-from-motion.
+		</p>
+	</div>
+
+	<hr>
+
+	<div class="section">
+		<h1>Method</h1>
+		<p>
+			<a href="https://nianticlabs.github.io/acezero/">ACE-Zero</a> reconstructs a scene from unposed images by alternating between training a scene coordinate regressor and registering and refining camera poses.
+			Its pose refinement is local: each pose is updated from information in its own image only, so errors can accumulate into drift.
+			We add a global step to every ACE-Zero iteration.
+		</p>
+		<ol class="steps">
+			<li>
+				<b>Pose graph from predicted scene coordinates.</b>
+				ACE-Zero provides no pairwise constraints, so we derive them from its own predictions.
+				For an image pair, each scene coordinate predicted in one image is projected into the other; if the scene coordinate predicted at that pixel lies within a threshold &tau; of the original point, the pixel pair is kept as a match.
+				A relative pose is estimated from these matches with PnP and RANSAC and becomes an edge of the pose graph.
+			</li>
+			<li>
+				<b>Uncertainty-aware edges.</b>
+				Scene coordinate predictions are noisy and come without uncertainty estimates.
+				We score matches with two unsupervised geometric priors: the <i>epipolar error</i>, the distance of a reprojected point to its epipolar line, and the <i>optical flow error</i>, the distance between the reprojected point and the location predicted by RAFT optical flow.
+				Their weighted sum, &sigma; = &alpha;<sub>1</sub>e<sub>epi</sub> + &alpha;<sub>2</sub>e<sub>flow</sub>, is aggregated per edge and sets its information matrix &Omega; = I / (&sigma;<sup>2</sup> + &epsilon;), so unreliable constraints have less influence.
+			</li>
+			<li>
+				<b>Progressive global optimization.</b>
+				The weighted pose graph is optimized with Levenberg&ndash;Marquardt and a Huber loss at every ACE-Zero iteration, and the refined poses carry into the next iteration.
+				The consistency threshold &tau; is tightened from 0.2&nbsp;m to 0.05&nbsp;m as the predictions improve.
+			</li>
+		</ol>
+	</div>
+
+	<div class="section wide">
+		<figure>
+			<img src="./resources/epipolar.jpg" alt="Five views of the same scene with reprojected points and epipolar lines under increasing rotation and translation perturbations; the error values are 27, 62, 89, 38 and 81.">
+			<figcaption>
+				<b>Epipolar uncertainty.</b> Reprojected points and their epipolar lines, color-coded by error (green = low, red = high).
+				Errors are low without perturbation (a) and grow with rotation perturbations (b, c).
+				Adding translation perturbations (d, e) can reduce the error, so epipolar error is sensitive to interactions between pose components.
+				We therefore treat it as a heuristic confidence indicator rather than a strict geometric validator.
+			</figcaption>
+		</figure>
+	</div>
+
+	<div class="section">
+		<figure>
+			<img src="./resources/flow.jpg" alt="An input image, its predicted optical flow field, and dense correspondences drawn between the image pair." style="width:560px">
+			<figcaption>
+				<b>Optical flow uncertainty.</b> (a) One image from the input pair. (b) Predicted flow, where similar colors indicate similar motion directions.
+				(c) Correspondences overlaid on the image pair: optical flow provides robust pixel-level matches between views, complementing the global epipolar check with local consistency.
+			</figcaption>
+		</figure>
+		<p>
+			The PGO step takes about 30&nbsp;s per iteration, compared to about 150&nbsp;s for an ACE-Zero iteration, but it roughly halves the number of iterations needed, so a full reconstruction takes less time than ACE-Zero.
+		</p>
+	</div>
+
+	<hr>
+
+	<div class="section">
+		<h1>Results</h1>
+		<p>
+			We follow ACE-Zero and measure pose quality by novel view synthesis: each method's poses are used to train a Nerfacto model, and PSNR is computed on held-out views.
+			COLMAP poses serve as the pseudo ground truth reference.
+		</p>
+		<div class="table-scroll">
+			<table class="results">
+				<thead>
+					<tr>
+						<th>Average PSNR (dB) &uarr;</th>
+						<th>COLMAP</th>
+						<th>ACE-Zero</th>
+						<th>Ours</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr><td>7-Scenes</td><td>21.2</td><td>21.2</td><td class="best">21.7</td></tr>
+					<tr><td>Mip-NeRF 360</td><td>24.7</td><td>22.9</td><td class="best">24.3</td></tr>
+					<tr class="group"><td colspan="4">Tanks and Temples, short (150&ndash;500 images)</td></tr>
+					<tr><td class="indent">Training</td><td>19.9</td><td>17.8</td><td class="best">18.4</td></tr>
+					<tr><td class="indent">Intermediate</td><td>18.8</td><td>18.3</td><td class="best">18.8</td></tr>
+					<tr><td class="indent">Advanced</td><td>17.3</td><td>14.5</td><td class="best">16.8</td></tr>
+					<tr class="group"><td colspan="4">Tanks and Temples, long (4k&ndash;22k images)</td></tr>
+					<tr><td class="indent">Training</td><td>19.8</td><td>19.3</td><td class="best">19.7</td></tr>
+					<tr><td class="indent">Intermediate</td><td>19.9</td><td>19.6</td><td class="best">20.3</td></tr>
+					<tr><td class="indent">Advanced</td><td>14.5</td><td>16.1</td><td class="best">17.6</td></tr>
+				</tbody>
+			</table>
+		</div>
+		<p class="note">
+			Bold marks the best result excluding COLMAP. COLMAP uses its default settings, except on the long Tanks and Temples videos, where it uses the settings recommended for large collections (on 7-Scenes these reach 21.8&nbsp;dB).
+			The paper reports per-scene results, VGGT-SLAM and DROID-SLAM baselines, and reconstruction times.
+		</p>
+	</div>
+
+	<div class="section wide">
+		<figure>
+			<img src="./resources/qualitative.jpg" alt="Novel view renderings of four scenes from ground truth, VGGT-SLAM, ACE-Zero and our method.">
+			<figcaption>
+				Qualitative comparison on Mip-NeRF 360 (top two rows) and Tanks and Temples (bottom two rows) against VGGT-SLAM and ACE-Zero.
+				ACE-Zero performs well on small-scale scenes such as Mip-NeRF 360 but struggles in large, complex environments like Tanks and Temples, where our method maintains high rendering quality.
+			</figcaption>
+		</figure>
+
+		<h2>Office loop</h2>
+		<figure>
+			<img src="./resources/office_trajectories.png" alt="Office loop trajectories: COLMAP (PSNR 28.1), ACE-Zero (19.1), ours (25.6), ACE-Zero without warm start (15.6) and VGGT-SLAM (17.1).">
+			<figcaption>
+				Trajectories on the 473-frame office loop video. (d) ACE-Zero fails without COLMAP initialization, and (e) VGGT-SLAM performs loop closure but its low PSNR indicates inaccurate poses.
+			</figcaption>
+		</figure>
+		<figure>
+			<img src="./resources/office_renders.jpg" alt="Novel view renderings of five office views from ground truth, COLMAP, ACE-Zero without warm start, ACE-Zero, VGGT-SLAM and our method.">
+			<figcaption>
+				Novel view renderings on the office loop. ACE-Zero, even when initialized with COLMAP poses, produces artifacts and blur, while our method consistently delivers high-fidelity renderings.
+			</figcaption>
+		</figure>
+	</div>
+
+	<hr>
+
+	<div class="section">
+		<h1>Ablations</h1>
+		<figure>
+			<img src="./resources/ablation_components.png" alt="Bar chart of PSNR on 7-Scenes and Mip-NeRF 360 as components are added: vanilla PGO without graph 12.6 and 13.8, with graph 18.5 and 21.0, plus epipolar 19.5 and 22.0, plus optical flow 20.8 and 23.2, full PGO once 20.5 and 23.5, full progressive 21.7 and 24.3.">
+			<figcaption>
+				<b>Design components.</b> Vanilla PGO without our graph construction performs poorly due to unreliable edges.
+				Graph construction improves accuracy by more than 5&nbsp;dB, epipolar uncertainty adds moderate gains, and optical flow further improves robustness.
+				Applying PGO once at the end underperforms progressive integration at every iteration.
+			</figcaption>
+		</figure>
+		<div class="fig-row">
+			<figure>
+				<img src="./resources/ablation_threshold.png" alt="Line plot of PSNR against the consistency threshold tau of 0.05, 0.1 and 0.2 meters, peaking at 0.1, with progressive tau higher on both datasets.">
+				<figcaption>
+					<b>Consistency threshold &tau;.</b> Among fixed values, &tau; = 0.1&nbsp;m balances accuracy and graph connectivity, while 0.2&nbsp;m admits noisy matches. The progressive schedule (stars) performs best.
+				</figcaption>
+			</figure>
+			<figure>
+				<img src="./resources/sparse_data.png" alt="Line plot of PSNR against training set size of 25, 50 and 75 percent on Mip-NeRF 360 and Tanks and Temples, with our method above ACE-Zero at every size.">
+				<figcaption>
+					<b>Fewer input images.</b> Our method is more robust than ACE-Zero to limited training data on both Mip-NeRF 360 and Tanks and Temples (corrected version from the supplementary material).
+				</figcaption>
+			</figure>
+		</div>
+	</div>
+
+	<hr>
+
+	<div class="section">
+		<h1>Code</h1>
+		<p>
+			The code builds on <a href="https://github.com/nianticlabs/acezero">ACE-Zero</a>.
+			The paper's results were produced with an internal pose graph optimizer that cannot be released, so the repository provides a re-implementation based on <a href="https://gtsam.org">GTSAM</a>, together with an extended pipeline and scripts to reproduce its results.
+			It is distributed under the ACE-Zero license for non-commercial use.
+		</p>
+		<div class="links">
+			<a href="https://github.com/eldentse/visual_localization_pgo_public">[GitHub]</a>
+		</div>
+	</div>
+
+	<hr>
+
+	<div class="section">
+		<h1>Paper and Supplementary Material</h1>
+		<div class="paper-row">
+			<a href="https://openaccess.thecvf.com/content/CVPR2026/papers/Tse_Learning_Scene_Coordinate_Reconstruction_from_Unposed_Images_via_Pose_Graph_CVPR_2026_paper.pdf"><img class="layered-paper-big" style="height:175px; width:auto" src="./resources/paper.png" alt="First page of the paper"/></a>
+			<div style="font-size:14pt; flex:1 1 360px">
+				T. H. E. Tse, J. Peng, A. Yao.<br>
+				<b>Learning Scene Coordinate Reconstruction from Unposed Images via Pose Graph Optimization.</b><br>
+				In CVPR, 2026.<br>
+				(<a href="https://openaccess.thecvf.com/content/CVPR2026/html/Tse_Learning_Scene_Coordinate_Reconstruction_from_Unposed_Images_via_Pose_Graph_CVPR_2026_paper.html">CVF Open Access</a>,
+				<a href="https://openaccess.thecvf.com/content/CVPR2026/supplemental/Tse_Learning_Scene_Coordinate_CVPR_2026_supplemental.pdf">supplementary</a>,
+				<a href="https://cvpr.thecvf.com/virtual/2026/poster/40234">conference page</a>)
+			</div>
+		</div>
+
+		<h2 id="bibtex">BibTeX</h2>
+		<pre class="bibtex">@InProceedings{Tse_2026_CVPR,
+    author    = {Tse, Tze Ho Elden and Peng, Jizong and Yao, Angela},
+    title     = {Learning Scene Coordinate Reconstruction from Unposed Images via Pose Graph Optimization},
+    booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+    month     = {June},
+    year      = {2026},
+    pages     = {21816-21825}
+}</pre>
+		<p style="text-align:center"><a href="./resources/bibtex.txt">[bibtex.txt]</a></p>
+	</div>
+
+	<hr>
+
+	<div class="section">
+		<h1>Acknowledgements</h1>
+		<p>
+			This work builds on <a href="https://nianticlabs.github.io/acezero/">ACE-Zero</a> by Brachmann et al.
+			This template was originally made by <a href="http://web.mit.edu/phillipi/">Phillip Isola</a> and <a href="http://richzhang.github.io/">Richard Zhang</a> for a <a href="http://richzhang.github.io/colorization/">colorful</a> ECCV project; the code can be found <a href="https://github.com/richzhang/webpage-template">here</a>.
+		</p>
+	</div>
+	<br>
+</body>
+</html>
